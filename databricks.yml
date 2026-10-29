@@ -1,0 +1,50 @@
+# ============================================================
+# STAGE 3: databricks.yml — Databricks Asset Bundle (DAB) config
+# JD coverage: Infrastructure as Code, Databricks, MLOps pipeline
+# ============================================================
+
+bundle:
+  name: overpayment-mlops
+
+# Variables (can differ per target)
+variables:
+  model_name:
+    description: Unity Catalog model name
+    default: workspace.default.overpayment_model
+
+# ---------- RESOURCES: what gets deployed ----------
+resources:
+  jobs:
+    overpayment_training_job:
+      name: "overpayment-training-${bundle.target}"
+      tasks:
+        - task_key: "train_xgboost"
+          notebook_task:
+            notebook_path: /Workspace/Users/kodchemayur@gmail.com/train.ipynb
+            source: WORKSPACE
+          # Free Edition: use serverless (no cluster config needed)
+          environment_key: default
+
+      # Serverless environment (Free Edition only supports serverless)
+      environments:
+        - environment_key: default
+          spec:
+            client: "4"
+            dependencies:
+              - xgboost
+              - optuna
+              - mlflow
+              - scikit-learn
+
+# ---------- TARGETS: dev vs prod ----------
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-4cb748a7-080f.cloud.databricks.com
+
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-4cb748a7-080f.cloud.databricks.com
